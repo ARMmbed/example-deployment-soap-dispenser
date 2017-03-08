@@ -3,12 +3,13 @@
 
 #include "dot_util.h"
 #include "mDotEvent.h"
+#include "ApplicationConfig.h"
 
 class RadioEvent : public mDotEvent
 {
 
 public:
-    RadioEvent() {}
+    RadioEvent(ApplicationConfig* aConfig) : config(aConfig) {}
 
     virtual ~RadioEvent() {}
 
@@ -63,15 +64,21 @@ public:
 
             logDebug("Rx %d bytes", info->RxBufferSize);
             if (info->RxBufferSize > 0) {
-                // print RX data as hexadecimal
-                //printf("Rx data: %s\r\n", mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
-
-                // print RX data as string
-                std::string rx((const char*)info->RxBuffer, info->RxBufferSize);
-                printf("Rx data: %s\r\n", rx.c_str());
+                if (info->RxPort == 5 && info->RxBufferSize == 2) { // Change interval
+                    config->set_tx_interval_s((info->RxBuffer[0] << 8) + info->RxBuffer[1]);
+                    logInfo("Changed sending interval to %d seconds", config->get_tx_interval_s());
+                }
+                else {
+                    logWarning("Received Rx, but cannot handle it. port=%d, size=%d", info->RxPort, info->RxBufferSize);
+                    // print RX data as hexadecimal
+                    printf("Rx data: %s\r\n", mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
+                }
             }
         }
     }
+
+private:
+    ApplicationConfig* config;
 };
 
 #endif

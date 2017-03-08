@@ -9,7 +9,58 @@ Before you can use the firmware you need authentication keys for the network. Fo
 1. Flash this application on an xDot.
 1. Inspect the serial logs, and look for a line that starts with `[INFO] device ID/EUI`.
 
-Next, provision the device in LORIOT - our LoRa network service provider:
+Next, provision the device in the LoRa bridge:
+
+1. Go to the [LORIOT bridge](http://apm-lora-eu2.cloudapp.net:5101).
+1. Click *Create new device*.
+1. Fill in the Device EUI and an mbed Device Connector certificate.
+1. On the 'Set your LoRa Keys' page, under 'Over the Air activation', copy the `APP_KEY`.
+1. Enter the `APP_KEY` in `main.cpp` as the value for `network_key`.
+
+Build and flash your application, the device now joins the network.
+
+Next, set up LWM2M rules for the device.
+
+**Resources**
+
+```json
+{
+    "soap/0/presses_left": {
+        "mode": "r",
+        "defaultValue": "0"
+    },
+    "lora/0/interval": {
+        "mode": "w"
+    }
+}
+```
+
+**Process Data**
+
+```js
+function (bytes) {
+    return {
+        "soap/0/presses_left": (bytes[0] << 8) + bytes[1]
+    };
+}
+```
+
+**Write Data**
+
+```js
+{
+    "lora/0/interval": function (v) {
+        var b = Number(v);
+        return { port: 5, data: [ (b >> 8) & 0xff, b & 0xff ] };
+    }
+}
+```
+
+Save the configuration. The device now shows up in mbed Device Connector.
+
+### Alternative: provision directly in LORIOT
+
+This does not expose the device to mbed Device Connector, but is useful for troubleshooting.
 
 1. Go to the [ARM LORIOT account](http://eu1.loriot.io/home/) - for credentials see one of the contributors.
 1. Under *Applications*, select *HPE*.
@@ -37,7 +88,7 @@ Build and flash the firmware, the device should now join the network.
 
 ## Receiving data
 
-See `RadioEvent.h` for a hook on which to receive data.
+See `RadioEvent.h` for a hook on which to receive data. This hook is already used to process the interval frequency frames (on port 5).
 
 ## Troubleshooting
 

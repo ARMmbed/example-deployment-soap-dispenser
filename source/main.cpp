@@ -1,11 +1,12 @@
 #include "dot_util.h"
 #include "RadioEvent.h"
+#include "ApplicationConfig.h"
 
 static uint8_t network_id[] = { 0xBE, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x03, 0x93 };
 static uint8_t network_key[] = { 0x31, 0x39, 0x64, 0xC9, 0x25, 0x4D, 0x29, 0xFE, 0x3D, 0xE5, 0x59, 0xC0, 0xDB, 0xDE, 0x05, 0xF8 };
 static uint8_t frequency_sub_band = 0;
 static bool public_network = true;
-static uint8_t ack = 1;
+static uint8_t ack = 0;
 
 // deepsleep consumes slightly less current than sleep
 // in sleep mode, IO state is maintained, RAM is retained, and application will resume after waking up
@@ -13,7 +14,8 @@ static uint8_t ack = 1;
 // if deep_sleep == true, device will enter deepsleep mode
 static bool deep_sleep = false;
 
-mDot* dot = NULL;
+mDot* dot;
+ApplicationConfig* config;
 
 Serial pc(USBTX, USBRX);
 
@@ -25,20 +27,29 @@ AnalogIn lux(XBEE_AD0);
 #endif
 
 int main() {
-    // Custom event handler for automatically displaying RX data
-    RadioEvent events;
-
     pc.baud(115200);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
     dot = mDot::getInstance();
+    config = new ApplicationConfig(dot);
+
+    // Custom event handler for automatically displaying RX data
+    RadioEvent events(config);
 
     // attach the custom events handler
     dot->setEvents(&events);
 
     if (!dot->getStandbyFlag()) {
         logInfo("mbed-os library version: %d", MBED_LIBRARY_VERSION);
+
+        // If we start up (not from standby), and the interval is over 60s we'll set it back to 60s.
+        // Not sure if we actually want this...
+        if (config->get_tx_interval_s() > 60) {
+            config->set_tx_interval_s(60);
+        }
+
+        logInfo("configuration: presses_left=%d, tx_interval=%d", config->get_presses_left(), config->get_tx_interval_s());
 
         // start from a well-known state
         logInfo("defaulting Dot configuration");
@@ -89,7 +100,6 @@ int main() {
     }
 
     while (true) {
-        uint16_t light;
         std::vector<uint8_t> tx_data;
 
         // join network if not joined
@@ -97,29 +107,12 @@ int main() {
             join_network();
         }
 
-#if defined(TARGET_XDOT_L151CC)
-        // configure the ISL29011 sensor on the xDot-DK for continuous ambient light sampling, 16 bit conversion, and maximum range
-        lux.setMode(ISL29011::ALS_CONT);
-        lux.setResolution(ISL29011::ADC_16BIT);
-        lux.setRange(ISL29011::RNG_64000);
+        uint32_t presses_left = config->get_presses_left();
 
-        // get the latest light sample and send it to the gateway
-        light = lux.getData();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
+        tx_data.push_back((presses_left >> 8) & 0xff);
+        tx_data.push_back(presses_left & 0xff);
 
-        // put the LSL29011 ambient light sensor into a low power state
-        lux.setMode(ISL29011::PWR_DOWN);
-#else
-        // get some dummy data and send it to the gateway
-        light = lux.read_u16();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
         send_data(tx_data);
-#endif
 
         // if going into deepsleep mode, save the session so we don't need to join again after waking up
         // not necessary if going into sleep mode since RAM is retained
@@ -131,7 +124,7 @@ int main() {
         // ONLY ONE of the three functions below should be uncommented depending on the desired wakeup method
         //sleep_wake_rtc_only(deep_sleep);
         //sleep_wake_interrupt_only(deep_sleep);
-        sleep_wake_rtc_or_interrupt(0 /* next TX window */, deep_sleep);
+        sleep_wake_rtc_or_interrupt(config->get_tx_interval_s() * 1000, deep_sleep);
     }
 
     return 0;
