@@ -31,6 +31,10 @@ Next, set up LWM2M rules for the device.
     },
     "lora/0/interval": {
         "mode": "w"
+    },
+    "lora/0/timestamp": {
+        "mode": "r",
+        "defaultValue": "0"
     }
 }
 ```
@@ -40,7 +44,8 @@ Next, set up LWM2M rules for the device.
 ```js
 function (bytes) {
     return {
-        "soap/0/presses_left": (bytes[0] << 8) + bytes[1]
+        "soap/0/presses_left": (bytes[0] << 8) + bytes[1],
+        "lora/0/timestamp": Date.now()
     };
 }
 ```
