@@ -3,10 +3,10 @@
 #include "ApplicationConfig.h"
 
 static uint8_t network_id[] = { 0xBE, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x03, 0x93 };
-static uint8_t network_key[] = { 0x31, 0x39, 0x64, 0xC9, 0x25, 0x4D, 0x29, 0xFE, 0x3D, 0xE5, 0x59, 0xC0, 0xDB, 0xDE, 0x05, 0xF8 };
+static uint8_t network_key[] = { 0x48, 0x4A, 0x12, 0x7D, 0x98, 0xAF, 0x14, 0x36, 0xDB, 0xF3, 0xBC, 0x8C, 0xF6, 0x00, 0x44, 0x48};
 static uint8_t frequency_sub_band = 0;
 static bool public_network = true;
-static uint8_t ack = 0;
+static bool ack = 0;
 
 // deepsleep consumes slightly less current than sleep
 // in sleep mode, IO state is maintained, RAM is retained, and application will resume after waking up
@@ -26,8 +26,15 @@ ISL29011 lux(i2c);
 AnalogIn lux(XBEE_AD0);
 #endif
 
+void gpio_fall() {
+    config->decrease_presses_left();
+}
+
 int main() {
     pc.baud(115200);
+
+    InterruptIn soap(GPIO1);
+    soap.fall(&gpio_fall);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
