@@ -291,19 +291,8 @@ void join_network() {
     }
 }
 
-void sleep_wake_rtc_only(uint32_t delay_ms, bool deepsleep) {
-    uint32_t next_tx_window = dot->getNextTxMs();
-    // If next TX window is after the delay_ms, wait at least until the next TX window is...
-    if (next_tx_window > delay_ms) {
-        delay_ms = next_tx_window;
-    }
-
-    // next window is right now?
-    if (delay_ms == 0) {
-        delay_ms = 10000; // wait 10s.
-    }
-
-    uint32_t delay_s = delay_ms / 1000;
+void sleep_wake_rtc_only(uint32_t delay_s, bool deepsleep) {
+    delay_s = calculate_actual_sleep_time(delay_s);
 
     logInfo("%ssleeping %lus", deepsleep ? "deep" : "", delay_s);
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
@@ -391,19 +380,23 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     }
 }
 
-void sleep_wake_rtc_or_interrupt(uint32_t delay_ms, bool deepsleep) {
-    uint32_t next_tx_window = dot->getNextTxMs();
+uint32_t calculate_actual_sleep_time(uint32_t delay_s) {
+    uint32_t next_tx_window = dot->getNextTxMs() / 1000;
     // If next TX window is after the delay_ms, wait at least until the next TX window is...
-    if (next_tx_window > delay_ms) {
-        delay_ms = next_tx_window;
+    if (next_tx_window > delay_s) {
+        delay_s = next_tx_window;
     }
 
     // next window is right now?
-    if (delay_ms == 0) {
-        delay_ms = 10000; // wait 10s.
+    if (delay_s == 0) {
+        delay_s = 10; // wait 10s.
     }
 
-    uint32_t delay_s = delay_ms / 1000;
+    return delay_s;
+}
+
+void sleep_wake_rtc_or_interrupt(uint32_t delay_s, bool deepsleep) {
+    delay_s = calculate_actual_sleep_time(delay_s);
 
 #if defined (TARGET_XDOT_L151CC)
     if (deepsleep) {
@@ -542,10 +535,10 @@ void sleep_configure_io() {
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO1 || dot->getWakeMode() == mDot::RTC_ALARM) {
-        GPIO_InitStruct.Pin = GPIO_PIN_5;
-        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+        // GPIO_InitStruct.Pin = GPIO_PIN_5;
+        // GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+        // GPIO_InitStruct.Pull = GPIO_NOPULL;
+        // HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO2 || dot->getWakeMode() == mDot::RTC_ALARM) {
         GPIO_InitStruct.Pin = GPIO_PIN_0;

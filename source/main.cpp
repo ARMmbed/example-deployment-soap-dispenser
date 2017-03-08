@@ -26,7 +26,11 @@ ISL29011 lux(i2c);
 AnalogIn lux(XBEE_AD0);
 #endif
 
+static bool fell = false;
+static uint32_t sleep_until = 0;
+
 void gpio_fall() {
+    fell = true;
     config->decrease_presses_left();
 }
 
@@ -35,6 +39,9 @@ int main() {
 
     InterruptIn soap(GPIO1);
     soap.fall(&gpio_fall);
+
+    // gets disabled automatically when going to sleep and restored when waking up
+    DigitalOut led(GPIO0, 1);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
@@ -107,6 +114,16 @@ int main() {
     }
 
     while (true) {
+        if (fell) {
+            fell = false;
+
+            // we only care about waking up from RTC, so go back to sleep asap
+            uint32_t sleep_time = sleep_until - time(NULL);
+            logInfo("Woke from interrupt, going back to sleep for %d seconds", sleep_time);
+            sleep_wake_rtc_or_interrupt(sleep_time, deep_sleep);
+            continue;
+        }
+
         std::vector<uint8_t> tx_data;
 
         // join network if not joined
@@ -119,6 +136,8 @@ int main() {
         tx_data.push_back((presses_left >> 8) & 0xff);
         tx_data.push_back(presses_left & 0xff);
 
+        logInfo("Sending presses %d", presses_left);
+
         send_data(tx_data);
 
         // if going into deepsleep mode, save the session so we don't need to join again after waking up
@@ -128,10 +147,13 @@ int main() {
             dot->saveNetworkSession();
         }
 
+        uint32_t sleep_time = calculate_actual_sleep_time(config->get_tx_interval_s());
+        sleep_until = time(NULL) + sleep_time;
+
         // ONLY ONE of the three functions below should be uncommented depending on the desired wakeup method
         //sleep_wake_rtc_only(deep_sleep);
         //sleep_wake_interrupt_only(deep_sleep);
-        sleep_wake_rtc_or_interrupt(config->get_tx_interval_s() * 1000, deep_sleep);
+        sleep_wake_rtc_or_interrupt(sleep_time, deep_sleep);
     }
 
     return 0;

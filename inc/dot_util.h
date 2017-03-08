@@ -37,4 +37,6 @@ void sleep_restore_io();
 
 void send_data(std::vector<uint8_t> data);
 
+uint32_t calculate_actual_sleep_time(uint32_t delay_s);
+
 #endif
