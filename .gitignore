@@ -1,0 +1,6 @@
+BUILD/
+libxDot-mbed5
+.mbed
+mbed_settings.*
+mbed-os/
+.hg/
