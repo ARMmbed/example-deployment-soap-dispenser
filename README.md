@@ -7,19 +7,19 @@ Soap dispenser firmware for xDot.
 Before you can use the firmware you need authentication keys for the network. For this you need your device EUI. To find the EUI:
 
 1. Flash this application on an xDot.
-1. Inspect the serial logs, and look for a line that starts with `[INFO] device ID/EUI`.
+1. Inspect the serial logs, and look for a line that starts with '[INFO] device ID/EUI' and '[INFO] network KEY'.
 
 Next, provision the device in the LoRa bridge:
 
 1. Go to the [LORIOT bridge](http://apm-lora-eu2.cloudapp.net:5101).
 1. Click *Create new device*.
-1. Fill in the Device EUI and an mbed Device Connector certificate.
-1. On the 'Set your LoRa Keys' page, under 'Over the Air activation', copy the `APP_KEY`.
-1. Enter the `APP_KEY` in `main.cpp` as the value for `network_key`.
+1. Fill in the device ID/EUI and an mbed Device Connector certificate.
+1. Navigate to LORIOT.io->Applications/HPE/Devices/ImportOTAA
+1. Copy device ID/EUI and network KEY into DevEUI and APPKEY respectively.
 
 Build and flash your application, the device now joins the network.
 
-Next, set up LWM2M rules for the device.
+Next, set up LWM2M rules for the device.EUI
 
 **Resources**
 
