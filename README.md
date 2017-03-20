@@ -15,7 +15,7 @@ Next, provision the device in the LoRa bridge:
 1. Click *Create new device*.
 1. Fill in the device ID/EUI and an mbed Device Connector certificate.
 1. Navigate to LORIOT.io->Applications/HPE/Devices/ImportOTAA
-1. Copy device ID/EUI and network KEY into DevEUI and APPKEY respectively.
+1. Copy 'device ID/EUI' and 'network KEY' into DevEUI and APPKEY respectively (Must be UPPERCASE).
 
 Build and flash your application, the device now joins the network.
 
