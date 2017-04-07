@@ -10,6 +10,7 @@ typedef struct {
     uint32_t presses_left;
     uint32_t tx_interval;
     bool     initialized;
+    bool     low_battery;
 
 } ApplicationConfigData;
 
@@ -22,6 +23,7 @@ public:
         if (!data.initialized) {
             data.presses_left = 1000;
             data.tx_interval = 60;
+            data.low_battery = false;
             data.initialized = true;
         }
     }
@@ -33,9 +35,23 @@ public:
     uint32_t get_tx_interval_s() {
         return data.tx_interval;
     }
-
+    
+    uint32_t get_battery_status() {
+        return data.low_battery;
+    }
+    
     void decrease_presses_left() {
         data.presses_left--;
+        persist();
+    }
+    
+    void reset_presses_left() {
+        data.presses_left = 1000;
+        persist();
+    }
+    
+    void alert_low_battery() {
+        data.low_battery = true;
         persist();
     }
 

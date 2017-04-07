@@ -29,16 +29,32 @@ AnalogIn lux(XBEE_AD0);
 static bool fell = false;
 static uint32_t sleep_until = 0;
 
-void gpio_fall() {
+void counter_dec() {
     fell = true;
     config->decrease_presses_left();
+}
+
+void counter_reset() {
+    fell = true;
+    config->reset_presses_left();
+}
+
+void low_battery() {
+    fell = true;
+    config->alert_low_battery();
 }
 
 int main() {
     pc.baud(115200);
 
-    InterruptIn soap(GPIO1);
-    soap.fall(&gpio_fall);
+    InterruptIn dispense(GPIO1);
+    dispense.fall(&counter_dec);
+    
+    InterruptIn resetCounter(GPIO3);
+    resetCounter.fall(&counter_reset);
+    
+    InterruptIn lowBat(GPIO2);
+    lowBat.fall(&low_battery);
 
     // gets disabled automatically when going to sleep and restored when waking up
     DigitalOut led(GPIO0, 1);
@@ -135,10 +151,18 @@ int main() {
 
         tx_data.push_back((presses_left >> 8) & 0xff);
         tx_data.push_back(presses_left & 0xff);
+        
+        if (config->get_battery_status()) {
+            tx_data.push_back(0x01);
+            logInfo("Alert low battery");
+            
+        }
 
         logInfo("Sending presses %d", presses_left);
 
         send_data(tx_data);
+        
+        
 
         // if going into deepsleep mode, save the session so we don't need to join again after waking up
         // not necessary if going into sleep mode since RAM is retained
