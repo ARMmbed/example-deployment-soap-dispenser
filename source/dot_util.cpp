@@ -535,10 +535,10 @@ void sleep_configure_io() {
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO1 || dot->getWakeMode() == mDot::RTC_ALARM) {
-        GPIO_InitStruct.Pin = GPIO_PIN_5;
-        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//        GPIO_InitStruct.Pin = GPIO_PIN_5;
+//        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+//        GPIO_InitStruct.Pull = GPIO_NOPULL;
+//        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO2 || dot->getWakeMode() == mDot::RTC_ALARM) {
         GPIO_InitStruct.Pin = GPIO_PIN_0;
