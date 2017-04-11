@@ -26,35 +26,47 @@ ISL29011 lux(i2c);
 AnalogIn lux(XBEE_AD0);
 #endif
 
-static bool fell = false;
+static bool interrupt = false;
 static uint32_t sleep_until = 0;
 
 void counter_dec() {
-    fell = true;
+    interrupt = true;
     config->decrease_presses_left();
 }
 
 void counter_reset() {
-    fell = true;
+    interrupt = true;
     config->reset_presses_left();
 }
 
 void low_battery() {
-    fell = true;
+    interrupt = true;
     config->alert_low_battery();
+}
+
+void stable_battery() {
+    interrupt = true;
+    config->alert_stable_battery();
 }
 
 int main() {
     pc.baud(115200);
-
+    
     InterruptIn dispense(GPIO1);
     dispense.fall(&counter_dec);
     
-    InterruptIn resetCounter(GPIO3);
-    resetCounter.fall(&counter_reset);
+//    DigitalIn lowBat(GPIO2);
     
-    InterruptIn lowBat(GPIO2);
-    lowBat.fall(&low_battery);
+//    DigitalIn resetCounter(GPIO3);
+
+    
+//    InterruptIn lowBat(GPIO2);
+//    lowBat.fall(&low_battery);
+    
+//    InterruptIn resetCounter(GPIO3);
+//    resetCounter.fall(&counter_reset);
+    
+
 
     // gets disabled automatically when going to sleep and restored when waking up
     DigitalOut led(GPIO0, 1);
@@ -130,8 +142,8 @@ int main() {
     }
 
     while (true) {
-        if (fell) {
-            fell = false;
+        if (interrupt) {
+            interrupt = false;
 
             // we only care about waking up from RTC, so go back to sleep asap
             uint32_t sleep_time = sleep_until - time(NULL);
@@ -152,12 +164,32 @@ int main() {
         tx_data.push_back((presses_left >> 8) & 0xff);
         tx_data.push_back(presses_left & 0xff);
         
-        if (config->get_battery_status()) {
-            tx_data.push_back(0x01);
-            logInfo("Alert low battery");
-            
-        }
+//        if (resetCounter==0) {
+//            config->reset_presses_left();
+//            logInfo("Replenished gel");
+//        }
+//        
+        //To clear the lowBat status catching high interrupt will not work, simply check status of the GPIO on runtime and resets it here.
+//        if (lowBat==1) {
+//            stable_battery();
+//            tx_data.push_back(0x00);
+//            logInfo("Battery voltage healthy");
+//        }
+//        
+//        else {
+//            low_battery();
+//            tx_data.push_back(0x01);
+//            logInfo("ALERT! low battery");
+//        }
 
+        
+        //As this is interrupt drive above, simply get status of battery, will only push data is low battery
+//        if (config->get_battery_status()) {
+//            tx_data.push_back(0x01);
+//            logInfo("ALERT! low battery");
+//            
+//        }
+        
         logInfo("Sending presses %d", presses_left);
 
         send_data(tx_data);

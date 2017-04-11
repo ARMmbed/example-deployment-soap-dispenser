@@ -23,7 +23,6 @@ public:
         if (!data.initialized) {
             data.presses_left = 1000;
             data.tx_interval = 60;
-            data.low_battery = false;
             data.initialized = true;
         }
     }
@@ -54,7 +53,12 @@ public:
         data.low_battery = true;
         persist();
     }
-
+    
+    void alert_stable_battery() {
+        data.low_battery = false;
+        persist();
+    }
+    
     void set_tx_interval_s(uint32_t tx_interval_s) {
         data.tx_interval = tx_interval_s;
         persist();
