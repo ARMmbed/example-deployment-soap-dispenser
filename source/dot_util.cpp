@@ -500,27 +500,27 @@ void sleep_configure_io() {
     __GPIOB_CLK_ENABLE();
     __GPIOC_CLK_ENABLE();
     __GPIOH_CLK_ENABLE();
-    
+
     GPIO_InitTypeDef GPIO_InitStruct;
-    
+
     // UART1_TX, UART1_RTS & UART1_CTS to analog nopull - RX could be a wakeup source
     GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_11 | GPIO_PIN_12;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-    
+
     // I2C_SDA & I2C_SCL to analog nopull
     GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    
+
     // SPI_MOSI, SPI_MISO, SPI_SCK, & SPI_NSS to analog nopull
     GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    
+
     // iterate through potential wake pins - leave the configured wake pin alone if one is needed
     if (dot->getWakePin() != WAKE || dot->getWakeMode() == mDot::RTC_ALARM) {
         GPIO_InitStruct.Pin = GPIO_PIN_0;
@@ -547,10 +547,10 @@ void sleep_configure_io() {
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO3 || dot->getWakeMode() == mDot::RTC_ALARM) {
-        GPIO_InitStruct.Pin = GPIO_PIN_2;
-        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+        // GPIO_InitStruct.Pin = GPIO_PIN_2;
+        // GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+        // GPIO_InitStruct.Pull = GPIO_NOPULL;
+        // HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != UART1_RX || dot->getWakeMode() == mDot::RTC_ALARM) {
         GPIO_InitStruct.Pin = GPIO_PIN_10;

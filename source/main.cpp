@@ -3,7 +3,7 @@
 #include "ApplicationConfig.h"
 
 static uint8_t network_id[] = { 0xBE, 0x7A, 0x00, 0x00, 0x00, 0x00, 0x03, 0x93 };
-static uint8_t network_key[] = { 0x48, 0x4A, 0x12, 0x7D, 0x98, 0xAF, 0x14, 0x36, 0xDB, 0xF3, 0xBC, 0x8C, 0xF6, 0x00, 0x44, 0x48};
+static uint8_t network_key[] = { 0x48, 0x4A, 0x12, 0x7D, 0x98, 0xAF, 0x14, 0x36, 0xDB, 0xF3, 0xBC, 0x8C, 0xF6, 0x00, 0x44, 0x48 };
 static uint8_t frequency_sub_band = 0;
 static bool public_network = true;
 static bool ack = 0;
@@ -26,47 +26,30 @@ ISL29011 lux(i2c);
 AnalogIn lux(XBEE_AD0);
 #endif
 
-static bool interrupt = false;
+static bool counter_interrupt = false;
+static bool reset_interrupt   = false;
 static uint32_t sleep_until = 0;
 
 void counter_dec() {
-    interrupt = true;
+    counter_interrupt = true;
     config->decrease_presses_left();
 }
 
 void counter_reset() {
-    interrupt = true;
+    reset_interrupt = true;
     config->reset_presses_left();
-}
-
-void low_battery() {
-    interrupt = true;
-    config->alert_low_battery();
-}
-
-void stable_battery() {
-    interrupt = true;
-    config->alert_stable_battery();
 }
 
 int main() {
     pc.baud(115200);
-    
+
     InterruptIn dispense(GPIO1);
     dispense.fall(&counter_dec);
-    
+
     DigitalIn lowBat(GPIO2);
-    
-//    DigitalIn resetCounter(GPIO3);
 
-    
-//    InterruptIn lowBat(GPIO2);
-//    lowBat.fall(&low_battery);
-//    
-//    InterruptIn resetCounter(GPIO3);
-//    resetCounter.fall(&counter_reset);
-    
-
+    InterruptIn resetCounter(GPIO3);
+    resetCounter.fall(&counter_reset);
 
     // gets disabled automatically when going to sleep and restored when waking up
     DigitalOut led(GPIO0, 1);
@@ -141,9 +124,13 @@ int main() {
         dot->restoreNetworkSession();
     }
 
+    logInfo("Outside the while loop...");
+
     while (true) {
-        if (interrupt) {
-            interrupt = false;
+        logInfo("Inside the while loop. counter_interrupt=%d, reset_interrupt=%d", counter_interrupt, reset_interrupt);
+
+        if (counter_interrupt) {
+            counter_interrupt = false;
 
             // we only care about waking up from RTC, so go back to sleep asap
             uint32_t sleep_time = sleep_until - time(NULL);
@@ -152,49 +139,60 @@ int main() {
             continue;
         }
 
-        std::vector<uint8_t> tx_data;
+        if (reset_interrupt) {
+            reset_interrupt = false;
 
-        // join network if not joined
-        if (!dot->getNetworkJoinStatus()) {
-            join_network();
+            // do reset stuff
+
+
+            // we only care about waking up from RTC, so go back to sleep asap
+            uint32_t sleep_time = sleep_until - time(NULL);
+            logInfo("Woke from interrupt, going back to sleep for %d seconds", sleep_time);
+            sleep_wake_rtc_or_interrupt(sleep_time, deep_sleep);
+            continue;
         }
 
-        uint32_t presses_left = config->get_presses_left();
+//         std::vector<uint8_t> tx_data;
 
-        tx_data.push_back((presses_left >> 8) & 0xff);
-        tx_data.push_back(presses_left & 0xff);
-        
-//        if (resetCounter==0) {
-//            config->reset_presses_left();
-//            logInfo("Replenished gel");
-//        }
-//        
-        //To clear the lowBat status catching high interrupt will not work, simply check status of the GPIO on runtime and resets it here.
-        if (lowBat==1) {
-            stable_battery();
-            tx_data.push_back(0x00);
-            logInfo("Battery voltage healthy");
-        }
-        
-        else {
-            low_battery();
-            tx_data.push_back(0x01);
-            logInfo("ALERT! low battery");
-        }
+//         // join network if not joined
+//         if (!dot->getNetworkJoinStatus()) {
+//             join_network();
+//         }
 
-        
-        //As this is interrupt drive above, simply get status of battery, will only push data is low battery
-//        if (config->get_battery_status()) {
-//            tx_data.push_back(0x01);
-//            logInfo("ALERT! low battery");
-//            
-//        }
-        
-        logInfo("Sending presses %d", presses_left);
+//         uint32_t presses_left = config->get_presses_left();
 
-        send_data(tx_data);
-        
-        
+//         tx_data.push_back((presses_left >> 8) & 0xff);
+//         tx_data.push_back(presses_left & 0xff);
+
+// //        if (resetCounter==0) {
+// //            config->reset_presses_left();
+// //            logInfo("Replenished gel");
+// //        }
+// //
+//         // Read the value of the battery pin, if it's high the battery is OK. Low means the battery is low.
+//         if (lowBat.read() == 1) {
+//             // @todo; we should not do this every time... Only when we see that battery is switched, to prevent writing to the NVM too much
+//             config->alert_stable_battery();
+//             tx_data.push_back(0x00);
+//             logInfo("Battery voltage healthy");
+//         }
+//         else {
+//             config->alert_low_battery();
+//             tx_data.push_back(0x01);
+//             logInfo("ALERT! low battery");
+//         }
+
+
+//         //As this is interrupt drive above, simply get status of battery, will only push data is low battery
+// //        if (config->get_battery_status()) {
+// //            tx_data.push_back(0x01);
+// //            logInfo("ALERT! low battery");
+// //
+// //        }
+
+//         logInfo("Sending presses %d", presses_left);
+
+//         send_data(tx_data);
 
         // if going into deepsleep mode, save the session so we don't need to join again after waking up
         // not necessary if going into sleep mode since RAM is retained
