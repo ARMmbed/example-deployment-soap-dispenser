@@ -28,6 +28,7 @@ AnalogIn lux(XBEE_AD0);
 
 static bool counter_interrupt = false;
 static bool reset_interrupt   = false;
+static bool low_battery_interrupt   = false;
 static uint32_t sleep_until = 0;
 
 void counter_dec() {
@@ -40,13 +41,19 @@ void counter_reset() {
     config->reset_presses_left();
 }
 
+void low_battery() {
+    low_battery_interrupt = true;
+}
+
 int main() {
     pc.baud(115200);
 
     InterruptIn dispense(GPIO1);
     dispense.fall(&counter_dec);
 
-    DigitalIn lowBat(GPIO2);
+    InterruptIn lowBat(GPIO2);
+    lowBat.fall(&low_battery);
+    // DigitalIn lowBat(GPIO2);
 
     InterruptIn resetCounter(GPIO3);
     resetCounter.fall(&counter_reset);
@@ -127,7 +134,8 @@ int main() {
     logInfo("Outside the while loop...");
 
     while (true) {
-        logInfo("Inside the while loop. counter_interrupt=%d, reset_interrupt=%d", counter_interrupt, reset_interrupt);
+        logInfo("Inside the while loop. counter_interrupt=%d, reset_interrupt=%d, low_battery_interrupt=%d",
+            counter_interrupt, reset_interrupt, low_battery_interrupt);
 
         if (counter_interrupt) {
             counter_interrupt = false;
