@@ -55,16 +55,11 @@ int main() {
     InterruptIn dispense(GPIO1);
     dispense.fall(&counter_dec);
     
-    DigitalIn lowBat(GPIO2);
+    InterruptIn lowBat(GPIO2);
+    lowBat.fall(&low_battery);
     
-//    DigitalIn resetCounter(GPIO3);
-
-    
-//    InterruptIn lowBat(GPIO2);
-//    lowBat.fall(&low_battery);
-//    
-//    InterruptIn resetCounter(GPIO3);
-//    resetCounter.fall(&counter_reset);
+    InterruptIn resetCounter(GPIO3);
+    resetCounter.fall(&counter_reset);
     
 
 
@@ -164,11 +159,11 @@ int main() {
         tx_data.push_back((presses_left >> 8) & 0xff);
         tx_data.push_back(presses_left & 0xff);
         
-//        if (resetCounter==0) {
-//            config->reset_presses_left();
-//            logInfo("Replenished gel");
-//        }
-//        
+        if (resetCounter==0) {
+            config->reset_presses_left();
+            logInfo("Replenished gel");
+        }
+        
         //To clear the lowBat status catching high interrupt will not work, simply check status of the GPIO on runtime and resets it here.
         if (lowBat==1) {
             stable_battery();
@@ -176,19 +171,19 @@ int main() {
             logInfo("Battery voltage healthy");
         }
         
-        else {
-            low_battery();
-            tx_data.push_back(0x01);
-            logInfo("ALERT! low battery");
-        }
+//        else {
+//            low_battery();
+//            tx_data.push_back(0x01);
+//            logInfo("ALERT! low battery");
+//        }
 
         
         //As this is interrupt drive above, simply get status of battery, will only push data is low battery
-//        if (config->get_battery_status()) {
-//            tx_data.push_back(0x01);
-//            logInfo("ALERT! low battery");
-//            
-//        }
+        if (config->get_battery_status()) {
+            tx_data.push_back(0x01);
+            logInfo("ALERT! low battery");
+            
+        }
         
         logInfo("Sending presses %d", presses_left);
 
