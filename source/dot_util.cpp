@@ -332,7 +332,7 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     } else {
         // configure WAKE pin (connected to S2 on xDot-DK) as the pin that will wake the xDot from low power modes
         //      other pins can be confgured instead: GPIO0-3 or UART_RX
-        dot->setWakePin(WAKE);
+        dot->setWakePin(GPIO0);
     }
 
     logInfo("%ssleeping until interrupt on %s pin", deepsleep ? "deep" : "", deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str());
@@ -529,10 +529,10 @@ void sleep_configure_io() {
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO0 || dot->getWakeMode() == mDot::RTC_ALARM) {
-        // GPIO_InitStruct.Pin = GPIO_PIN_4;
-        // GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-        // GPIO_InitStruct.Pull = GPIO_NOPULL;
-        // HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+        GPIO_InitStruct.Pin = GPIO_PIN_4;
+        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO1 || dot->getWakeMode() == mDot::RTC_ALARM) {
 //        GPIO_InitStruct.Pin = GPIO_PIN_5;
@@ -541,10 +541,10 @@ void sleep_configure_io() {
 //        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO2 || dot->getWakeMode() == mDot::RTC_ALARM) {
-        GPIO_InitStruct.Pin = GPIO_PIN_0;
-        GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+        // GPIO_InitStruct.Pin = GPIO_PIN_0;
+        // GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+        // GPIO_InitStruct.Pull = GPIO_NOPULL;
+        // HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
     }
     if (dot->getWakePin() != GPIO3 || dot->getWakeMode() == mDot::RTC_ALARM) {
         // GPIO_InitStruct.Pin = GPIO_PIN_2;

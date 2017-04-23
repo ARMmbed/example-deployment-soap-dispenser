@@ -51,7 +51,7 @@ int main() {
     InterruptIn dispense(GPIO1);
     dispense.fall(&counter_dec);
 
-    InterruptIn lowBat(GPIO0);
+    InterruptIn lowBat(GPIO2);
     lowBat.fall(&low_battery);
     // DigitalIn lowBat(GPIO2);
 
@@ -163,9 +163,9 @@ int main() {
 //         std::vector<uint8_t> tx_data;
 
 //         // join network if not joined
-//         if (!dot->getNetworkJoinStatus()) {
-//             join_network();
-//         }
+        if (!dot->getNetworkJoinStatus()) {
+            join_network();
+        }
 
 //         uint32_t presses_left = config->get_presses_left();
 
