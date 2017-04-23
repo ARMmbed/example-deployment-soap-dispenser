@@ -51,7 +51,7 @@ int main() {
     InterruptIn dispense(GPIO1);
     dispense.fall(&counter_dec);
 
-    InterruptIn lowBat(GPIO2);
+    InterruptIn lowBat(GPIO0);
     lowBat.fall(&low_battery);
     // DigitalIn lowBat(GPIO2);
 
@@ -199,6 +199,10 @@ int main() {
 // //        }
 
 //         logInfo("Sending presses %d", presses_left);
+
+        std::vector<uint8_t> blah;
+        blah.push_back(0x12);
+        send_data(blah);
 
 //         send_data(tx_data);
 
