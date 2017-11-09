@@ -107,14 +107,15 @@ int main() {
         // for count = 3 and threshold = 5, the Dot will be considered disconnected after 15 missed packets in a row
         update_network_link_check_config(3, 5);
         
+        
+        //Disable ADR for range test, set spread factor to 12.
         logInfo("enabling ADR");
-        if (dot->setAdr(true) != mDot::MDOT_OK) {
-            logError("failed to enable ADR");
+        if (dot->setAdr(false) != mDot::MDOT_OK) {
+            logError("failed to disable ADR");
         }
         
-        // Start in SF_10, and then ADR will find the most applicable datarate
-        logInfo("setting TX datarate to SF_10");
-        if (dot->setTxDataRate(mDot::SF_10) != mDot::MDOT_OK) {
+        logInfo("setting TX datarate to SF_12");
+        if (dot->setTxDataRate(mDot::SF_12) != mDot::MDOT_OK) {
             logError("failed to set TX datarate");
         }
         
