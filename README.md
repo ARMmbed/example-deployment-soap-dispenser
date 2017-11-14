@@ -2,6 +2,8 @@
 
 Soap dispenser firmware for xDot.
 
+WARNING, i seem to recieve RTX error codes at runtime if compiled using CLI, works find imported into online compiler..
+
 ## How to provision devices
 
 Before you can use the firmware you need authentication keys for the network. For this you need your device EUI. To find the EUI:
