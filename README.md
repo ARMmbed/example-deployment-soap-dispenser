@@ -2,7 +2,7 @@
 
 Soap dispenser firmware for xDot.
 
-WARNING, i seem to recieve RTX error codes at runtime if compiled using CLI, works find imported into online compiler..
+**WARNING** I seem to recieve RTX error codes at runtime if compiled using CLI, works find imported into online compiler..
 
 ## How to provision devices
 
